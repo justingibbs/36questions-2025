@@ -1,49 +1,22 @@
 from fastapi import FastAPI, Request, HTTPException, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import firebase_admin
 from firebase_admin import auth
 from app.auth.firebase_auth import require_auth
 
 app = FastAPI()
 
+# Mount static files (for any additional static assets)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 @app.get("/", response_class=HTMLResponse)
 async def home():
-    return """
-    <html>
-    <head>
-        <title>Auth Demo</title>
-        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-        <!-- Add Firebase SDK -->
-        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    </head>
-    <body>
-        <div id="auth-container">
-            <h1>Welcome</h1>
-            <div hx-get="/login-form" 
-                 hx-trigger="load"
-                 hx-swap="innerHTML">
-            </div>
-        </div>
+    return FileResponse("app/static/index.html")
 
-        <script>
-            // Your Firebase config
-            const firebaseConfig = {
-                apiKey: "AIzaSyC3mwZOTbEuhV168RCd_Jrq23RMGLMa8Ss",
-                authDomain: "questions-2025.firebaseapp.com",
-                projectId: "questions-2025",
-                storageBucket: "questions-2025.firebasestorage.app",
-                messagingSenderId: "734601910603",
-                appId: "1:734601910603:web:69de58411c480d8b9c70ce",
-                measurementId: "G-WZVP0NNP0N"
-            };
-
-            // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
-        </script>
-    </body>
-    </html>
-    """
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    return FileResponse("app/static/dashboard.html")
 
 @app.get("/login-form", response_class=HTMLResponse)
 async def login_form():
@@ -187,6 +160,17 @@ async def logout():
                 // Clear the stored token
                 localStorage.removeItem('authToken');
             </script>
+        </div>
+    """
+
+@app.get("/api/user-info", response_class=HTMLResponse)
+@require_auth
+async def user_info(request: Request):
+    user = request.state.user
+    return f"""
+        <div>
+            <h2>Welcome, {user['email']}!</h2>
+            <p>User ID: {user['uid']}</p>
         </div>
     """
 
