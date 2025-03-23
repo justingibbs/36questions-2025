@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Auth Demo</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <div id="dashboard-container">
+        <h1>Dashboard</h1>
+        <div id="user-info">
+            Loading...
+        </div>
+        <button onclick="handleLogout()">Logout</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3mwZOTbEuhV168RCd_Jrq23RMGLMa8Ss",
+            authDomain: "questions-2025.firebaseapp.com",
+            projectId: "questions-2025",
+            storageBucket: "questions-2025.firebasestorage.app",
+            messagingSenderId: "734601910603",
+            appId: "1:734601910603:web:69de58411c480d8b9c70ce",
+            measurementId: "G-WZVP0NNP0N"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Check authentication immediately
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                user.getIdToken().then(token => {
+                    htmx.ajax('GET', '/api/user-info', {
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        },
+                        target: '#user-info'
+                    });
+                });
+            } else {
+                // No user is signed in, redirect to login
+                window.location.href = '/';
+            }
+        });
+
+        function handleLogout() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = '/';
+            });
+        }
+    </script>
+</body>
+</html> 

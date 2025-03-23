@@ -1,10 +1,12 @@
-# Steps to setup project
+# Project Build Steps
 1. Complete
    1. `uv init`
    2. Set up `.env` according to `.env.template`
+      1. Include link to serviceAccount.json which holds Firebase information
    3. Set up project on Firebase
 2. To do
-   1. Set up firebase authentication
+   1. View app in development
+   2. Set up Firebase authentication
 
 # Technology stack
 
@@ -44,3 +46,10 @@
 * **No CSS Frameworks**
   * No Bootstrap, Tailwind, or other CSS frameworks
   * Use simple, custom CSS
+
+
+# Run test server
+1. Run `uv sync`
+2. Activate virtual environment `source .venv/bin/activate`
+3. Spin up server `uvicorn main:app --reload`
+4. Click supplied link
