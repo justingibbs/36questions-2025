@@ -1,35 +1,33 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, Response
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+import firebase_admin
+from firebase_admin import auth
 from app.auth.firebase_auth import require_auth
 
 app = FastAPI()
 
-# Public route
 @app.get("/", response_class=HTMLResponse)
 async def home():
     return """
     <html>
     <head>
-        <title>Firebase Auth Demo</title>
-        <!-- Firebase UI CSS -->
-        <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
-        
-        <!-- Firebase App (compat) -->
-        <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-app-compat.js"></script>
-        <!-- Firebase Auth (compat) -->
-        <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-auth-compat.js"></script>
-        <!-- Firebase UI -->
-        <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+        <title>Auth Demo</title>
+        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+        <!-- Add Firebase SDK -->
+        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     </head>
     <body>
-        <h1>Welcome</h1>
-        <div id="firebaseui-auth-container"></div>
-        <div id="loader">Loading...</div>
-        <div id="message" style="display:none;"></div>
+        <div id="auth-container">
+            <h1>Welcome</h1>
+            <div hx-get="/login-form" 
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+            </div>
+        </div>
 
         <script>
-            // Your web app's Firebase configuration
+            // Your Firebase config
             const firebaseConfig = {
                 apiKey: "AIzaSyC3mwZOTbEuhV168RCd_Jrq23RMGLMa8Ss",
                 authDomain: "questions-2025.firebaseapp.com",
@@ -42,88 +40,155 @@ async def home():
 
             // Initialize Firebase
             firebase.initializeApp(firebaseConfig);
-
-            // Check if user is already signed in
-            firebase.auth().onAuthStateChanged((user) => {
-                if (user) {
-                    const messageDiv = document.getElementById('message');
-                    messageDiv.style.display = 'block';
-                    
-                    if (!user.emailVerified) {
-                        messageDiv.innerHTML = `
-                            <p>Please verify your email address. 
-                            <button onclick="sendVerificationEmail()">Resend verification email</button></p>
-                        `;
-                    } else {
-                        // User is signed in and email is verified
-                        firebase.auth().currentUser.getIdToken()
-                            .then(token => {
-                                fetch('/protected', {
-                                    headers: {
-                                        'Authorization': 'Bearer ' + token
-                                    }
-                                })
-                                .then(response => response.text())
-                                .then(html => {
-                                    document.body.innerHTML = html;
-                                });
-                            });
-                    }
-                }
-            });
-
-            // Function to send verification email
-            function sendVerificationEmail() {
-                firebase.auth().currentUser.sendEmailVerification()
-                    .then(() => {
-                        document.getElementById('message').innerHTML = 
-                            'Verification email sent! Please check your inbox.';
-                    })
-                    .catch((error) => {
-                        document.getElementById('message').innerHTML = 
-                            'Error sending verification email: ' + error.message;
-                    });
-            }
-
-            // Initialize the FirebaseUI Widget using Firebase
-            const ui = new firebaseui.auth.AuthUI(firebase.auth());
-
-            // FirebaseUI config
-            const uiConfig = {
-                signInOptions: [
-                    {
-                        provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
-                        requireDisplayName: false,
-                        signInMethod: firebase.auth.EmailAuthProvider.EMAIL_PASSWORD_SIGN_IN_METHOD
-                    }
-                ],
-                signInFlow: 'popup',
-                callbacks: {
-                    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
-                        const user = authResult.user;
-                        if (!user.emailVerified) {
-                            user.sendEmailVerification();
-                            document.getElementById('message').innerHTML = 
-                                'Please verify your email address. Check your inbox for a verification link.';
-                        }
-                        return false;
-                    }
-                }
-            };
-
-            // Start FirebaseUI
-            ui.start('#firebaseui-auth-container', uiConfig);
         </script>
     </body>
     </html>
     """
 
-# Protected route example
+@app.get("/login-form", response_class=HTMLResponse)
+async def login_form():
+    return """
+        <div id="login-form">
+            <h2>Login</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+            <p>
+                <a href="#" hx-get="/signup-form" hx-target="#auth-container">
+                    Need an account? Sign up
+                </a>
+            </p>
+
+            <script>
+                async function handleLogin(event) {
+                    event.preventDefault();
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    
+                    try {
+                        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                        const idToken = await userCredential.user.getIdToken();
+                        
+                        // Use HTMX to load protected content with the ID token
+                        htmx.ajax('GET', '/protected', {
+                            headers: {
+                                'Authorization': 'Bearer ' + idToken
+                            },
+                            target: '#auth-container'
+                        });
+                    } catch (error) {
+                        alert('Login failed: ' + error.message);
+                    }
+                }
+            </script>
+        </div>
+    """
+
+@app.get("/signup-form", response_class=HTMLResponse)
+async def signup_form():
+    return """
+        <div id="signup-form">
+            <h2>Sign Up</h2>
+            <form hx-post="/signup" hx-target="#auth-container">
+                <div>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Sign Up</button>
+            </form>
+            <p>
+                <a href="#" hx-get="/login-form" hx-target="#auth-container">
+                    Already have an account? Login
+                </a>
+            </p>
+        </div>
+    """
+
+@app.post("/signup", response_class=HTMLResponse)
+async def signup(request: Request):
+    form_data = await request.form()
+    email = form_data.get('email')
+    password = form_data.get('password')
+    
+    try:
+        user = auth.create_user(
+            email=email,
+            password=password,
+            email_verified=False
+        )
+        # Send verification email
+        link = auth.generate_email_verification_link(email)
+        # Here you would typically send the link via your email service
+        
+        return """
+            <div>
+                <h2>Verify Your Email</h2>
+                <p>Please check your email to verify your account.</p>
+                <a href="#" hx-get="/login-form" hx-target="#auth-container">
+                    Return to login
+                </a>
+            </div>
+        """
+    except Exception as e:
+        return f"""
+            <div>
+                <h2>Error</h2>
+                <p>Could not create account: {str(e)}</p>
+                <a href="#" hx-get="/signup-form" hx-target="#auth-container">
+                    Try again
+                </a>
+            </div>
+        """
+
 @app.get("/protected", response_class=HTMLResponse)
 @require_auth
 async def protected_route(request: Request):
     user = request.state.user
-    return f"Hello {user['email']}, this is a protected route!"
+    return f"""
+        <div id="protected-content">
+            <h2>Protected Content</h2>
+            <p>Welcome, {user['email']}!</p>
+            <button onclick="handleLogout()">Logout</button>
+
+            <script>
+                function handleLogout() {{
+                    firebase.auth().signOut().then(() => {{
+                        htmx.ajax('GET', '/login-form', {{
+                            target: '#auth-container'
+                        }});
+                    }});
+                }}
+            </script>
+        </div>
+    """
+
+@app.post("/logout", response_class=HTMLResponse)
+async def logout():
+    return """
+        <div id="auth-container">
+            <h1>Welcome</h1>
+            <div hx-get="/login-form" 
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+            </div>
+            <script>
+                // Clear the stored token
+                localStorage.removeItem('authToken');
+            </script>
+        </div>
+    """
 
 if __name__ == "__main__":
     import uvicorn

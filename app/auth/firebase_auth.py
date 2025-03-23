@@ -36,6 +36,7 @@ async def verify_firebase_token(request: Request):
         decoded_token = auth.verify_id_token(token)
         return decoded_token
     except Exception as e:
+        print(f"Token verification error: {str(e)}")  # Add debugging
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def require_auth(func):
@@ -43,7 +44,6 @@ def require_auth(func):
     @wraps(func)
     async def wrapper(*args, request: Request, **kwargs):
         user_token = await verify_firebase_token(request)
-        # Add the user's info to the request state
         request.state.user = user_token
         return await func(*args, request=request, **kwargs)
     return wrapper 
