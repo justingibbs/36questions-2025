@@ -2,13 +2,29 @@ from fastapi import FastAPI, Request, HTTPException, Response
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import firebase_admin
-from firebase_admin import auth
+from firebase_admin import auth, credentials
 from app.auth.firebase_auth import require_auth
+from app.routes.chat import router as chat_router
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Initialize Firebase only if it hasn't been initialized
+if not firebase_admin._apps:  # Check if no Firebase app exists
+    service_account_path = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')
+    print(f"Looking for service account at: {service_account_path}")
+    cred = credentials.Certificate(service_account_path)
+    firebase_admin.initialize_app(cred)
 
 app = FastAPI()
 
 # Mount static files (for any additional static assets)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Include routes
+app.include_router(chat_router, prefix="")  # No prefix if you want /dashboard directly
 
 @app.get("/", response_class=HTMLResponse)
 async def home():

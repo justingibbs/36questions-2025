@@ -53,3 +53,16 @@
 2. Activate virtual environment `source .venv/bin/activate`
 3. Spin up server `uvicorn main:app --reload`
 4. Click supplied link
+
+## questions-1 Prompt
+
+How would you extend this @codebase to leverage PydanticAI and MCP to:
+1. Provide a logged in user with a chat window that would prompt the user to answer questions from 36questioins.json file
+2. Guide user through answering that question in a satisfacory way
+3. Save the user approved answer to a user specific userID-answers.json file
+4. Then provide user the next question to answer until all have been answersed
+
+Note:
+- Pay attention to the Technology Stack in the README.md file
+- Leverage MCP to provide tools, resources (36questions.json), and prompts.
+- Feel free to modify 36questions.json to include any metadata to enable the LLM to know which questions have been answered per user

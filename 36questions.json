@@ -1,0 +1,29 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "Describe a time when you identified a problem or opportunity that others hadn't noticed yet. What actions did you take without being asked?",
+      "guidance": "Look for examples that demonstrate proactive problem identification and autonomous action. Strong answers show foresight, self-motivation, and willingness to go beyond defined responsibilities."
+    },
+    {
+      "id": 2,
+      "question": "Tell me about a situation where you implemented a significant improvement to a process or system on your own initiative. What was your approach and what results did you achieve?",
+      "guidance": "Evaluate whether the candidate can identify inefficiencies, develop solutions independently, and drive implementation. Strong answers include measurable outcomes and demonstrate persistence through challenges."
+    },
+    {
+      "id": 3,
+      "question": "When was the last time you learned a new skill that wasn't required for your job? What motivated you to learn it, and how did you go about acquiring this knowledge?",
+      "guidance": "Listen for self-directed learning that shows curiosity and personal drive. Strong answers reveal intrinsic motivation rather than external requirements, and should include structured approaches to learning."
+    },
+    {
+      "id": 4,
+      "question": "Give an example of a time when you pursued an opportunity despite significant obstacles or uncertainty. How did you determine it was worth pursuing, and what steps did you take?",
+      "guidance": "Look for comfort with ambiguity and calculated risk-taking. Strong answers demonstrate independent decision-making, resourcefulness in overcoming barriers, and persistence toward meaningful goals."
+    },
+    {
+      "id": 5,
+      "question": "Describe a situation where you had to take charge of a project or task without clear direction. How did you establish priorities and move the work forward?",
+      "guidance": "Assess the candidate's ability to create structure amid ambiguity. Strong answers show how they establish direction, make decisions with limited information, and maintain momentum without continuous oversight."
+    }
+  ]
+}
